@@ -13,10 +13,11 @@ Jellygate closes that gap with a small gateway and a Jellyfin bridge plugin so y
 
 ## What It Does
 
-- authenticates username/password directly against Jellyfin
-- issues a gateway session cookie after successful Jellyfin auth
+- issues a gateway session cookie after successful Jellyfin authentication
 - proxies into Aurral with trusted `X-Forwarded-User` and `X-Forwarded-Role` headers
-- supports an existing-session handoff from Jellyfin through a small Jellyfin plugin
+- uses a same-origin Jellyfin helper page to reuse an existing Jellyfin browser session when available
+- falls back to a Jellyfin login step when no active Jellyfin browser session is present
+- can still support direct username/password login if you explicitly enable it
 - ships as a single Docker image for the gateway plus a separate Jellyfin plugin artifact
 - includes an Unraid template for install/update flow
 
@@ -30,22 +31,24 @@ Jellygate closes that gap with a small gateway and a Jellyfin bridge plugin so y
 
 ## Login Flows
 
-### Direct Jellyfin credential login
+### Default browser flow
 
 1. User opens the Jellygate host
-2. Jellygate renders the bundled Svelte login page
+2. Jellygate redirects to the Jellyfin bridge helper route
+3. The helper page checks the current browser's Jellyfin session data on the Jellyfin origin
+4. If a Jellyfin token is already present, the helper calls the authenticated bridge session endpoint immediately
+5. If no token is present, the helper prompts the user to finish logging in to Jellyfin
+6. The bridge returns a short-lived signed handoff URL back to Jellygate
+7. Jellygate validates the token, creates its own session cookie, and forwards the user into Aurral
+
+### Optional direct credential flow
+
+1. User opens the Jellygate host
+2. Jellygate renders the bundled Svelte login page only if `ALLOW_PASSWORD_LOGIN=true` and Jellyfin handoff is unavailable or disabled
 3. User signs in with normal Jellyfin credentials
 4. Jellygate calls `POST /Users/AuthenticateByName` on Jellyfin
 5. Jellygate issues its own signed session cookie
 6. Jellygate proxies the request into Aurral with trusted identity headers
-
-### Existing Jellyfin session handoff
-
-1. User is already authenticated on the Jellyfin origin
-2. User hits the Jellyfin bridge plugin route
-3. The plugin resolves the current Jellyfin user and signs a short-lived handoff token
-4. The browser is redirected back to Jellygate
-5. Jellygate validates the token, creates its own session cookie, and forwards the user into Aurral
 
 ## Current Status
 
@@ -105,7 +108,7 @@ The gateway image is published through GitHub Actions to `ghcr.io/<owner>/jellyg
 The image contains:
 
 - the compiled Fastify gateway
-- the compiled Svelte UI assets
+- the compiled Svelte UI assets used for the optional direct-login fallback
 
 The Jellyfin plugin is released separately as a zip asset.
 
@@ -136,6 +139,14 @@ The plugin stores:
 - gateway handoff path
 - shared handoff secret
 - token lifetime
+
+Recommended handoff path:
+
+- `/auth/handoff`
+
+Recommended Jellyfin bridge path for the gateway:
+
+- `/JellygateBridge/launch`
 
 ## Security Notes
 
