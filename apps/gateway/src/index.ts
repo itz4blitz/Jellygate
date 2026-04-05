@@ -153,6 +153,13 @@ app.get('/auth/continue-with-jellyfin', async (request, reply) => {
 const handleProxyRequest = async (request: FastifyRequest, reply: FastifyReply) => {
   const session = readGatewaySession(request, config);
 
+  if (!session && isAurralLogoutRequest(request)) {
+    clearGatewaySession(reply, config);
+    setManualReauthFlag(reply, config);
+    reply.header('Clear-Site-Data', '"cache", "storage"');
+    return { success: true };
+  }
+
   if (!session) {
     if (prefersHtml(request)) {
       const returnTo = normalizeReturnTo(request.raw.url);
@@ -184,6 +191,7 @@ const handleProxyRequest = async (request: FastifyRequest, reply: FastifyReply) 
   if (isAurralLogoutRequest(request)) {
     clearGatewaySession(reply, config);
     setManualReauthFlag(reply, config);
+    reply.header('Clear-Site-Data', '"cache", "storage"');
   }
 
   await proxyToAurral(request, reply, config, session);
