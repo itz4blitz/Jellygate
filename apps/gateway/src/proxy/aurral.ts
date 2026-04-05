@@ -74,6 +74,16 @@ export async function proxyToAurral(
     reply.header(key, value);
   });
 
+  const contentType = response.headers.get('content-type') ?? '';
+
+  if (contentType.includes('text/html')) {
+    reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+
+    const html = Buffer.from(await response.arrayBuffer()).toString('utf8');
+    reply.send(injectBridgeClient(html));
+    return;
+  }
+
   const responseBody = Buffer.from(await response.arrayBuffer());
   reply.send(responseBody);
 }
@@ -117,4 +127,14 @@ function getProxyRequestBody(request: FastifyRequest): BodyInit | null {
   }
 
   return JSON.stringify(body);
+}
+
+function injectBridgeClient(html: string): string {
+  const bridgeScript = '<script src="/bridge-client.js"></script>';
+
+  if (html.includes('</head>')) {
+    return html.replace('</head>', `${bridgeScript}</head>`);
+  }
+
+  return bridgeScript + html;
 }

@@ -1,25 +1,50 @@
 # Jellygate
 
-`Jellygate` bridges `Jellyfin` authentication into `Aurral`.
+`Jellygate` is the auth handoff layer between `Jellyfin` and `Aurral`.
 
-It is built for the common self-hosted music setup where:
+It is built for the self-hosted music setup where:
 
 - `Jellyfin` already owns your users and passwords
 - `jfa-go` already manages invites and user lifecycle for Jellyfin
 - `Aurral` handles music requests and Lidarr-driven discovery
 - `Aurral` supports reverse-proxy auth, but not Jellyfin auth directly
 
-Jellygate closes that gap with a small gateway and a Jellyfin bridge plugin so your users can access `Aurral` with their normal Jellyfin credentials.
+Jellygate closes that gap with two small pieces:
+
+- a gateway that sits in front of `Aurral`
+- a Jellyfin plugin that performs a safe browser handoff from the Jellyfin origin
+
+The goal is simple:
+
+- users open `music.example.com`
+- if they already have a Jellyfin session, they flow straight into `Aurral`
+- if they do not, they sign into Jellyfin and then land in `Aurral`
+- when they log out, they return to the handoff page instead of getting stuck in Aurral's own login state
 
 ## What It Does
 
-- issues a gateway session cookie after successful Jellyfin authentication
+- reuses an existing Jellyfin browser session when one is already present
+- opens Jellyfin sign-in when a session is missing, then completes the handoff into Aurral
+- issues its own gateway session cookie after a successful handoff
 - proxies into Aurral with trusted `X-Forwarded-User` and `X-Forwarded-Role` headers
-- uses a same-origin Jellyfin helper page to reuse an existing Jellyfin browser session when available
-- falls back to a Jellyfin login step when no active Jellyfin browser session is present
-- can still support direct username/password login if you explicitly enable it
-- ships as a single Docker image for the gateway plus a separate Jellyfin plugin artifact
-- includes an Unraid template for install/update flow
+- keeps unknown proxied users non-admin by default
+- returns sign-outs to the bridge flow instead of dropping users into a broken Aurral auth state
+- ships as one gateway container plus one Jellyfin plugin artifact
+- includes an Unraid template for install and update flow
+
+## Screenshots
+
+### Music Request Handoff
+
+![Music Requests bridge page](docs/screenshots/music-requests-bridge-signed-out.png)
+
+### Jellyfin Plugin Config
+
+![Jellyfin plugin config page](docs/screenshots/jellyfin-plugin-config-page.png)
+
+### Jellyfin Plugin Details
+
+![Jellyfin plugin details page](docs/screenshots/jellyfin-plugin-package-details.png)
 
 ## Repo Layout
 
@@ -37,9 +62,10 @@ Jellygate closes that gap with a small gateway and a Jellyfin bridge plugin so y
 2. Jellygate redirects to the Jellyfin bridge helper route
 3. The helper page checks the current browser's Jellyfin session data on the Jellyfin origin
 4. If a Jellyfin token is already present, the helper calls the authenticated bridge session endpoint immediately
-5. If no token is present, the helper prompts the user to finish logging in to Jellyfin
-6. The bridge returns a short-lived signed handoff URL back to Jellygate
-7. Jellygate validates the token, creates its own session cookie, and forwards the user into Aurral
+5. If no token is present, the helper stays on the handoff page and opens Jellyfin sign-in in another tab when the user continues
+6. Once sign-in completes, the original handoff page detects the new Jellyfin session and requests a short-lived signed handoff URL
+7. Jellygate validates that token, creates its own session cookie, and forwards the user into Aurral
+8. On logout, the user returns to the bridge page in manual mode instead of falling through to Aurral's own login UI
 
 ### Optional direct credential flow
 

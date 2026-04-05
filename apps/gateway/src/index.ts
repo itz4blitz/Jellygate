@@ -46,6 +46,85 @@ await app.register(fastifyStatic, {
 
 app.get('/healthz', async () => ({ status: 'ok' }));
 
+app.get('/sw.js', async (_request, reply) => {
+  reply.type('application/javascript; charset=utf-8');
+  reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+  reply.header('Service-Worker-Allowed', '/');
+
+  return `self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const cacheKeys = await caches.keys();
+    await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+    await self.registration.unregister();
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    await Promise.all(clients.map((client) => client.navigate(client.url)));
+  })());
+});`;
+});
+
+app.get('/bridge-client.js', async (_request, reply) => {
+  reply.type('application/javascript; charset=utf-8');
+  reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+
+  return `(() => {
+  const origin = window.location.origin;
+  const manualLogoutRoute = '/auth/manual-logout';
+  const manualLogoutUrl = '/auth/continue-with-jellyfin?manual=1&returnTo=%2F';
+  const authBounceUrl = '/auth/continue-with-jellyfin?returnTo=%2F';
+  const bounce = (url) => window.setTimeout(() => window.location.replace(url), 150);
+  const stopAndBounce = (url) => {
+    bounce(url);
+    return new Promise(() => {});
+  };
+  document.addEventListener('click', (event) => {
+    const element = event.target instanceof Element ? event.target.closest('.logout-trapdoor') : null;
+    if (!element) {
+      return;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+    bounce(manualLogoutRoute);
+  }, true);
+  const normalizeUrl = (value) => {
+    try {
+      return new URL(typeof value === 'string' ? value : value?.url || '', origin);
+    } catch {
+      return null;
+    }
+  };
+  const shouldBounce = (url) => url && url.origin === origin && url.pathname.startsWith('/api/');
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (...args) => {
+    const url = normalizeUrl(args[0]);
+    const response = await originalFetch(...args);
+    if (url && url.origin === origin && url.pathname === '/api/auth/logout') {
+      return stopAndBounce(manualLogoutUrl);
+    }
+    if (response.status === 401 && shouldBounce(url)) {
+      return stopAndBounce(authBounceUrl);
+    }
+    return response;
+  };
+})();`;
+});
+
+app.get('/manifest.webmanifest', async (_request, reply) => {
+  reply.type('application/manifest+json; charset=utf-8');
+  reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+
+  return {
+    name: 'Jellygate',
+    short_name: 'Jellygate',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#0f172a',
+    theme_color: '#0f172a',
+    icons: []
+  };
+});
+
 app.get('/auth/public-config', async () => ({
   appName: config.APP_NAME,
   allowPasswordLogin: config.ALLOW_PASSWORD_LOGIN,
@@ -115,6 +194,13 @@ app.post('/auth/logout', async (_request, reply) => {
   return { ok: true };
 });
 
+app.get('/auth/manual-logout', async (_request, reply) => {
+  clearGatewaySession(reply, config);
+  setManualReauthFlag(reply, config);
+  reply.header('Clear-Site-Data', '"cache", "storage"');
+  reply.redirect('/auth/continue-with-jellyfin?manual=1&returnTo=%2F');
+});
+
 app.get('/auth/handoff', async (request, reply) => {
   const querySchema = z.object({
     token: z.string().min(1),
@@ -161,6 +247,11 @@ const handleProxyRequest = async (request: FastifyRequest, reply: FastifyReply) 
   }
 
   if (!session) {
+    if (isServiceWorkerAssetRequest(request)) {
+      reply.code(204);
+      return reply.send();
+    }
+
     if (prefersHtml(request)) {
       const returnTo = normalizeReturnTo(request.raw.url);
 
@@ -214,4 +305,9 @@ function prefersHtml(request: FastifyRequest): boolean {
 function isAurralLogoutRequest(request: FastifyRequest): boolean {
   const path = request.raw.url?.split('?')[0] ?? '';
   return request.method.toUpperCase() === 'POST' && path === '/api/auth/logout';
+}
+
+function isServiceWorkerAssetRequest(request: FastifyRequest): boolean {
+  const path = request.raw.url?.split('?')[0] ?? '';
+  return path === '/sw.js' || path === '/manifest.webmanifest';
 }
