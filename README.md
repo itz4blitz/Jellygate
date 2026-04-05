@@ -121,6 +121,7 @@ Minimum environment variables for the gateway:
 - `JELLYFIN_PUBLIC_URL`
 - `AURRAL_URL`
 - `COOKIE_SECRET`
+- `COOKIE_SECURE`
 - `HANDOFF_SECRET`
 
 The plugin stores:

@@ -22,6 +22,7 @@ const envSchema = z.object({
   AURRAL_URL: z.url(),
   COOKIE_NAME: z.string().default('jellygate_session'),
   COOKIE_SECRET: z.string().min(32),
+  COOKIE_SECURE: booleanish.default(true),
   HANDOFF_SECRET: z.string().min(32),
   SESSION_TTL_SECONDS: z.coerce.number().int().positive().default(43200),
   ALLOW_PASSWORD_LOGIN: booleanish.default(true),

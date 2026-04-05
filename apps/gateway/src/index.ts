@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
-import Fastify, { type FastifyRequest } from 'fastify';
+import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import { authenticateWithJellyfin } from './auth/jellyfin.js';
@@ -139,7 +139,7 @@ app.get('/auth/continue-with-jellyfin', async (request, reply) => {
   reply.redirect(target.toString());
 });
 
-app.all('/{*path}', async (request, reply) => {
+const handleProxyRequest = async (request: FastifyRequest, reply: FastifyReply) => {
   const session = readGatewaySession(request, config);
 
   if (!session) {
@@ -155,7 +155,10 @@ app.all('/{*path}', async (request, reply) => {
   }
 
   await proxyToAurral(request, reply, config, session);
-});
+};
+
+app.all('/', handleProxyRequest);
+app.all('/*', handleProxyRequest);
 
 await app.listen({
   host: config.HOST,

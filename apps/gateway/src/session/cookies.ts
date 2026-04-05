@@ -22,7 +22,7 @@ export function readGatewaySession(
 
 export function setGatewaySession(
   reply: FastifyReply,
-  config: Pick<GatewayConfig, 'COOKIE_NAME' | 'COOKIE_SECRET' | 'SESSION_TTL_SECONDS'>,
+  config: Pick<GatewayConfig, 'COOKIE_NAME' | 'COOKIE_SECRET' | 'COOKIE_SECURE' | 'SESSION_TTL_SECONDS'>,
   user: Omit<SessionTokenPayload, 'iss' | 'iat' | 'exp'>
 ): void {
   const issuedAt = Math.floor(Date.now() / 1000);
@@ -39,7 +39,7 @@ export function setGatewaySession(
     path: '/',
     httpOnly: true,
     sameSite: 'lax',
-    secure: true,
+    secure: config.COOKIE_SECURE,
     maxAge: config.SESSION_TTL_SECONDS
   });
 }

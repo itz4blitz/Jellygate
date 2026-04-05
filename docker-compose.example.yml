@@ -16,6 +16,7 @@ services:
       AURRAL_URL: http://aurral:3001
       COOKIE_NAME: jellygate_session
       COOKIE_SECRET: change-me-to-a-long-random-string
+      COOKIE_SECURE: true
       HANDOFF_SECRET: change-me-to-match-the-plugin
       SESSION_TTL_SECONDS: 43200
       ALLOW_PASSWORD_LOGIN: true
