@@ -9,6 +9,12 @@ It is built for the self-hosted music setup where:
 - `Aurral` handles music requests and Lidarr-driven discovery
 - `Aurral` supports reverse-proxy auth, but not Jellyfin auth directly
 
+The core problem is that `Aurral` can sit behind a trusted auth proxy, but it does not natively treat `Jellyfin` as its user system. Without a bridge, you either:
+
+- manage a separate set of Aurral accounts
+- accept transient proxy users with awkward role and logout behavior
+- or give up on a clean single-sign-on style flow entirely
+
 Jellygate closes that gap with two small pieces:
 
 - a gateway that sits in front of `Aurral`
@@ -20,6 +26,7 @@ The goal is simple:
 - if they already have a Jellyfin session, they flow straight into `Aurral`
 - if they do not, they sign into Jellyfin and then land in `Aurral`
 - when they log out, they return to the handoff page instead of getting stuck in Aurral's own login state
+- Jellyfin and `jfa-go` stay the source of truth for user access instead of creating another account silo
 
 ## What It Does
 
