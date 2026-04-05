@@ -1,5 +1,3 @@
-import { Readable } from 'node:stream';
-
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import type { GatewayConfig } from '../config.js';
@@ -74,12 +72,8 @@ export async function proxyToAurral(
     reply.header(key, value);
   });
 
-  if (!response.body) {
-    reply.send(await response.text());
-    return;
-  }
-
-  reply.send(Readable.fromWeb(response.body as never));
+  const body = Buffer.from(await response.arrayBuffer());
+  reply.send(body);
 }
 
 function supportsRequestBody(method: string): boolean {
