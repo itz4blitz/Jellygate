@@ -3,6 +3,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { GatewayConfig } from '../config.js';
 import { issueSessionToken, verifySessionToken, type SessionTokenPayload } from '../auth/tokens.js';
 
+const manualReauthCookieName = 'jellygate_manual_reauth';
+
 export function readGatewaySession(
   request: FastifyRequest,
   config: Pick<GatewayConfig, 'COOKIE_NAME' | 'COOKIE_SECRET'>
@@ -42,6 +44,8 @@ export function setGatewaySession(
     secure: config.COOKIE_SECURE,
     maxAge: config.SESSION_TTL_SECONDS
   });
+
+  clearManualReauth(reply);
 }
 
 export function clearGatewaySession(
@@ -49,6 +53,29 @@ export function clearGatewaySession(
   config: Pick<GatewayConfig, 'COOKIE_NAME'>
 ): void {
   reply.clearCookie(config.COOKIE_NAME, {
+    path: '/'
+  });
+}
+
+export function hasManualReauthFlag(request: FastifyRequest): boolean {
+  return request.cookies[manualReauthCookieName] === '1';
+}
+
+export function setManualReauthFlag(
+  reply: FastifyReply,
+  config: Pick<GatewayConfig, 'COOKIE_SECURE'>
+): void {
+  reply.setCookie(manualReauthCookieName, '1', {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: config.COOKIE_SECURE,
+    maxAge: 600
+  });
+}
+
+export function clearManualReauth(reply: FastifyReply): void {
+  reply.clearCookie(manualReauthCookieName, {
     path: '/'
   });
 }

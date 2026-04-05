@@ -10,7 +10,13 @@ import { authenticateWithJellyfin } from './auth/jellyfin.js';
 import { verifyHandoffToken } from './auth/tokens.js';
 import { normalizeReturnTo, readConfig } from './config.js';
 import { proxyToAurral } from './proxy/aurral.js';
-import { clearGatewaySession, readGatewaySession, setGatewaySession } from './session/cookies.js';
+import {
+  clearGatewaySession,
+  hasManualReauthFlag,
+  readGatewaySession,
+  setGatewaySession,
+  setManualReauthFlag
+} from './session/cookies.js';
 
 const loginSchema = z.object({
   username: z.string().min(1),
@@ -133,9 +139,14 @@ app.get('/auth/continue-with-jellyfin', async (request, reply) => {
     return { error: 'Jellyfin handoff is disabled' };
   }
 
-  const query = z.object({ returnTo: z.string().optional() }).parse(request.query);
+  const query = z.object({ returnTo: z.string().optional(), manual: z.string().optional() }).parse(request.query);
   const target = new URL(`${config.JELLYFIN_PUBLIC_URL.replace(/\/+$/, '')}${config.JELLYFIN_BRIDGE_PATH}`);
   target.searchParams.set('returnTo', normalizeReturnTo(query.returnTo));
+
+  if (query.manual === '1') {
+    target.searchParams.set('manual', '1');
+  }
+
   reply.redirect(target.toString());
 });
 
@@ -149,6 +160,11 @@ const handleProxyRequest = async (request: FastifyRequest, reply: FastifyReply) 
       if (config.ALLOW_JELLYFIN_HANDOFF && config.JELLYFIN_PUBLIC_URL) {
         const handoffUrl = new URL('/auth/continue-with-jellyfin', 'http://local');
         handoffUrl.searchParams.set('returnTo', returnTo);
+
+        if (hasManualReauthFlag(request)) {
+          handoffUrl.searchParams.set('manual', '1');
+        }
+
         reply.redirect(handoffUrl.pathname + handoffUrl.search);
         return;
       }
@@ -167,6 +183,7 @@ const handleProxyRequest = async (request: FastifyRequest, reply: FastifyReply) 
 
   if (isAurralLogoutRequest(request)) {
     clearGatewaySession(reply, config);
+    setManualReauthFlag(reply, config);
   }
 
   await proxyToAurral(request, reply, config, session);

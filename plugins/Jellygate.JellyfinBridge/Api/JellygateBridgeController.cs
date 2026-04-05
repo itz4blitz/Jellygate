@@ -78,15 +78,17 @@ public class JellygateBridgeController : ControllerBase
     }
 
     [HttpGet("launch")]
-    public ContentResult Launch([FromQuery] string? returnTo = null)
+    public ContentResult Launch([FromQuery] string? returnTo = null, [FromQuery] string? manual = null)
     {
         var safeReturnTo = NormalizeReturnTo(returnTo) ?? NormalizeReturnTo(Plugin.Instance?.Configuration.DefaultReturnPath) ?? "/";
+        var manualMode = string.Equals(manual, "1", StringComparison.Ordinal);
 
         var sessionEndpoint = $"{Request.PathBase}/JellygateBridge/session?returnTo={Uri.EscapeDataString(safeReturnTo)}";
         var loginPath = BuildJellyfinLoginUri();
         var encodedServerId = JavaScriptStringEncode(_applicationHost.SystemId);
         var encodedSessionEndpoint = JavaScriptStringEncode(sessionEndpoint);
         var encodedLoginPath = JavaScriptStringEncode(loginPath);
+        var encodedManualMode = manualMode ? "true" : "false";
 
         var html = $$"""
 <!DOCTYPE html>
@@ -168,6 +170,7 @@ public class JellygateBridgeController : ControllerBase
         const serverId = "{{encodedServerId}}";
         const sessionEndpoint = "{{encodedSessionEndpoint}}";
         const loginPath = "{{encodedLoginPath}}";
+        const manualMode = {{encodedManualMode}};
         const message = document.getElementById('message');
         const detail = document.getElementById('detail');
         const loginButton = document.getElementById('loginButton');
@@ -223,6 +226,14 @@ public class JellygateBridgeController : ControllerBase
         }
 
         async function startFlow() {
+            if (manualMode) {
+                message.textContent = 'You signed out of Aurral. Continue when you want to start a new Jellygate session.';
+                detail.textContent = 'If you are still signed in to Jellyfin, the button will continue immediately. Otherwise it will take you to Jellyfin login first.';
+                loginButton.textContent = 'Continue to Aurral';
+                loginButton.hidden = false;
+                return;
+            }
+
             if (await continueToGateway()) {
                 return;
             }
@@ -237,9 +248,12 @@ public class JellygateBridgeController : ControllerBase
             }, 1500);
         }
 
-        loginButton.addEventListener('click', () => {
-            window.open(loginPath, '_blank', 'noopener,noreferrer');
-            showLoginPrompt();
+        loginButton.addEventListener('click', async () => {
+            if (await continueToGateway()) {
+                return;
+            }
+
+            window.location.assign(loginPath);
         });
 
         startFlow().catch(() => {

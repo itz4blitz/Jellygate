@@ -8,12 +8,12 @@
     "category": "General",
     "versions": [
       {
-        "version": "0.1.5.0",
-        "changelog": "- Stop forwarding Jellyfin admin to unknown proxied Aurral users by default\n- Clear the Jellygate session when Aurral logout is used\n- Fix proxied POST request bodies for Aurral API actions",
+        "version": "__VG_IPV4_081ac7cbac78__",
+        "changelog": "- Preserve seamless Jellyfin auto-login by default but require manual re-entry after an explicit Aurral logout\n- Keep the safer default where unknown proxied users do not inherit Jellyfin admin automatically\n- Keep proxied POST request bodies working for Aurral API actions",
         "targetAbi": "10.11.7.0",
-        "sourceUrl": "https://github.com/itz4blitz/Jellygate/releases/download/v0.1.6/Jellygate.JellyfinBridge-v0.1.6.zip",
-        "checksum": "db3af2fbc37a7c1f00d7fa8674d063f1",
-        "timestamp": "2026-04-05T05:52:26Z"
+        "sourceUrl": "https://github.com/itz4blitz/Jellygate/releases/download/v0.1.7/Jellygate.JellyfinBridge-v0.1.7.zip",
+        "checksum": "5fd82fc39c4a97590d0acfc92ea3bdca",
+        "timestamp": "2026-04-05T06:01:15Z"
       }
     ]
   }
