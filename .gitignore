@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.DS_Store
+*.log
+*.zip
+apps/gateway/dist/
+apps/web/dist/
+plugins/**/bin/
+plugins/**/obj/

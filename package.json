@@ -1,0 +1,19 @@
+{
+  "name": "jellygate",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.32.1"
+  },
+  "scripts": {
+    "build": "pnpm --filter @jellygate/web build && pnpm --filter @jellygate/gateway build && dotnet build ./plugins/Jellygate.JellyfinBridge/Jellygate.JellyfinBridge.csproj",
+    "build:plugin": "dotnet build ./plugins/Jellygate.JellyfinBridge/Jellygate.JellyfinBridge.csproj",
+    "dev:gateway": "pnpm --filter @jellygate/gateway dev",
+    "dev:web": "pnpm --filter @jellygate/web dev",
+    "lint": "pnpm -r lint",
+    "package:plugin": "bash ./scripts/package-plugin.sh",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

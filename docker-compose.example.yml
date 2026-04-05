@@ -1,0 +1,45 @@
+services:
+  jellygate:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      APP_NAME: Jellygate
+      APP_VERSION: 0.1.0
+      UI_BASE_PATH: /__jellygate
+      JELLYFIN_URL: http://jellyfin:8096
+      JELLYFIN_PUBLIC_URL: https://media.example.com
+      JELLYFIN_BRIDGE_PATH: /JellygateBridge/start
+      AURRAL_URL: http://aurral:3001
+      COOKIE_NAME: jellygate_session
+      COOKIE_SECRET: change-me-to-a-long-random-string
+      HANDOFF_SECRET: change-me-to-match-the-plugin
+      SESSION_TTL_SECONDS: 43200
+      ALLOW_PASSWORD_LOGIN: true
+      ALLOW_JELLYFIN_HANDOFF: true
+      SIGNUP_URL: https://accounts.example.com
+      PASSWORD_RESET_URL: https://accounts.example.com/reset
+    ports:
+      - "3000:3000"
+    depends_on:
+      - aurral
+
+  aurral:
+    image: ghcr.io/lklynet/aurral:latest
+    restart: unless-stopped
+    environment:
+      AUTH_PROXY_ENABLED: true
+      AUTH_PROXY_HEADER: X-Forwarded-User
+      AUTH_PROXY_ROLE_HEADER: X-Forwarded-Role
+      AUTH_PROXY_DEFAULT_ROLE: user
+      AUTH_PROXY_TRUSTED_IPS: gateway-ip-here
+      TRUST_PROXY: true
+      DOWNLOAD_FOLDER: /app/downloads
+    volumes:
+      - ./data/aurral:/app/backend/data
+      - ./data/downloads:/app/downloads
+    expose:
+      - "3001"

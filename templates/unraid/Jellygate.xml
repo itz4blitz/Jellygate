@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Jellygate</Name>
+  <Repository>ghcr.io/itz4blitz/jellygate:latest</Repository>
+  <Registry>https://ghcr.io</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/itz4blitz/Jellygate</Support>
+  <Project>https://github.com/itz4blitz/Jellygate</Project>
+  <Overview>Bridges Jellyfin authentication into Aurral through a trusted reverse proxy gateway.</Overview>
+  <Category>Tools:</Category>
+  <WebUI>http://[IP]:[PORT:3000]</WebUI>
+  <Icon>https://raw.githubusercontent.com/itz4blitz/Jellygate/main/docs/icon.svg</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/itz4blitz/Jellygate/main/templates/unraid/Jellygate.xml</TemplateURL>
+  <Description>Jellygate authenticates users against Jellyfin, issues its own gateway session, and proxies into Aurral with trusted identity headers.</Description>
+  <Config Name="AppData" Target="/app/data" Default="/mnt/user/appdata/jellygate" Mode="rw" Description="Container app data" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/jellygate</Config>
+  <Config Name="Port" Target="3000" Default="3000" Mode="tcp" Description="Jellygate HTTP port" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="HOST" Target="HOST" Default="0.0.0.0" Mode="" Description="Bind host" Type="Variable" Display="always" Required="true" Mask="false">0.0.0.0</Config>
+  <Config Name="PORT" Target="PORT" Default="3000" Mode="" Description="Internal listen port" Type="Variable" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="APP_NAME" Target="APP_NAME" Default="Jellygate" Mode="" Description="Display name used in the login flow" Type="Variable" Display="advanced" Required="true" Mask="false">Jellygate</Config>
+  <Config Name="APP_VERSION" Target="APP_VERSION" Default="0.1.0" Mode="" Description="Application version label" Type="Variable" Display="advanced" Required="true" Mask="false">0.1.0</Config>
+  <Config Name="UI_BASE_PATH" Target="UI_BASE_PATH" Default="/__jellygate" Mode="" Description="Path for the bundled UI assets" Type="Variable" Display="advanced" Required="true" Mask="false">/__jellygate</Config>
+  <Config Name="JELLYFIN_URL" Target="JELLYFIN_URL" Default="http://Tower.local:8096" Mode="" Description="Internal Jellyfin URL reachable from the container" Type="Variable" Display="always" Required="true" Mask="false">http://Tower.local:8096</Config>
+  <Config Name="JELLYFIN_PUBLIC_URL" Target="JELLYFIN_PUBLIC_URL" Default="https://atomicstudio.org" Mode="" Description="Public Jellyfin URL used for the bridge handoff" Type="Variable" Display="always" Required="true" Mask="false">https://atomicstudio.org</Config>
+  <Config Name="JELLYFIN_BRIDGE_PATH" Target="JELLYFIN_BRIDGE_PATH" Default="/JellygateBridge/start" Mode="" Description="Jellyfin plugin route used for existing-session handoff" Type="Variable" Display="advanced" Required="true" Mask="false">/JellygateBridge/start</Config>
+  <Config Name="AURRAL_URL" Target="AURRAL_URL" Default="http://aurral:3001" Mode="" Description="Internal Aurral URL reachable from the container" Type="Variable" Display="always" Required="true" Mask="false">http://aurral:3001</Config>
+  <Config Name="COOKIE_NAME" Target="COOKIE_NAME" Default="jellygate_session" Mode="" Description="Gateway session cookie name" Type="Variable" Display="advanced" Required="true" Mask="false">jellygate_session</Config>
+  <Config Name="COOKIE_SECRET" Target="COOKIE_SECRET" Default="" Mode="" Description="Long random secret used to sign the Jellygate session cookie" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="HANDOFF_SECRET" Target="HANDOFF_SECRET" Default="" Mode="" Description="Long random secret shared with the Jellyfin bridge plugin" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="SESSION_TTL_SECONDS" Target="SESSION_TTL_SECONDS" Default="43200" Mode="" Description="Gateway session lifetime in seconds" Type="Variable" Display="advanced" Required="true" Mask="false">43200</Config>
+  <Config Name="ALLOW_PASSWORD_LOGIN" Target="ALLOW_PASSWORD_LOGIN" Default="true" Mode="" Description="Allow direct Jellyfin username/password login on the Jellygate host" Type="Variable" Display="advanced" Required="true" Mask="false">true</Config>
+  <Config Name="ALLOW_JELLYFIN_HANDOFF" Target="ALLOW_JELLYFIN_HANDOFF" Default="true" Mode="" Description="Allow existing-session handoff via the Jellyfin bridge plugin" Type="Variable" Display="advanced" Required="true" Mask="false">true</Config>
+  <Config Name="SIGNUP_URL" Target="SIGNUP_URL" Default="https://account.atomicstudio.org" Mode="" Description="Optional account creation URL shown on the login page" Type="Variable" Display="advanced" Required="false" Mask="false">https://account.atomicstudio.org</Config>
+  <Config Name="PASSWORD_RESET_URL" Target="PASSWORD_RESET_URL" Default="https://account.atomicstudio.org" Mode="" Description="Optional password reset URL shown on the login page" Type="Variable" Display="advanced" Required="false" Mask="false">https://account.atomicstudio.org</Config>
+</Container>

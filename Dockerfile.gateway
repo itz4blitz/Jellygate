@@ -1,0 +1,32 @@
+FROM node:22-alpine AS build
+
+WORKDIR /app
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+COPY package.json pnpm-workspace.yaml tsconfig.base.json vitest.workspace.ts .oxlintrc.json ./
+COPY apps/gateway/package.json apps/gateway/package.json
+COPY apps/web/package.json apps/web/package.json
+
+RUN pnpm install --no-frozen-lockfile
+
+COPY apps ./apps
+RUN pnpm --filter @jellygate/web build && pnpm --filter @jellygate/gateway build
+
+FROM node:22-alpine AS runtime
+
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+COPY package.json pnpm-workspace.yaml ./
+COPY apps/gateway/package.json apps/gateway/package.json
+RUN pnpm install --prod --filter @jellygate/gateway --no-frozen-lockfile
+
+COPY --from=build /app/apps/gateway/dist ./apps/gateway/dist
+COPY --from=build /app/apps/web/dist ./apps/web/dist
+
+CMD ["node", "apps/gateway/dist/index.js"]

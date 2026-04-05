@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Jellygate">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="#0f172a"/>
+  <path d="M56 128c0-18.2 14.8-33 33-33h41V72h34v23h3c18.2 0 33 14.8 33 33v39c0 18.2-14.8 33-33 33H89c-18.2 0-33-14.8-33-33zm33 1v38h78v-38h-78zm22-57v23h19V72zm53 57v38h3c0 0 0 0 0 0v-38z" fill="url(#bg)"/>
+  <path d="M186 88h14v80h-14z" fill="#38bdf8" opacity="0.75"/>
+</svg>
