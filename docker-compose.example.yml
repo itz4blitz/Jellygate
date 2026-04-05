@@ -14,6 +14,7 @@ services:
       JELLYFIN_PUBLIC_URL: https://media.example.com
       JELLYFIN_BRIDGE_PATH: /JellygateBridge/launch
       AURRAL_URL: http://aurral:3001
+      AURRAL_FORWARD_ADMIN_ROLE: false
       COOKIE_NAME: jellygate_session
       COOKIE_SECRET: change-me-to-a-long-random-string
       COOKIE_SECURE: true

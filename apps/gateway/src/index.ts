@@ -165,6 +165,10 @@ const handleProxyRequest = async (request: FastifyRequest, reply: FastifyReply) 
     return { error: 'Authentication required' };
   }
 
+  if (isAurralLogoutRequest(request)) {
+    clearGatewaySession(reply, config);
+  }
+
   await proxyToAurral(request, reply, config, session);
 };
 
@@ -180,4 +184,9 @@ function prefersHtml(request: FastifyRequest): boolean {
   const accept = request.headers.accept;
   const raw = Array.isArray(accept) ? accept.join(',') : typeof accept === 'string' ? accept : '';
   return raw.includes('text/html');
+}
+
+function isAurralLogoutRequest(request: FastifyRequest): boolean {
+  const path = request.raw.url?.split('?')[0] ?? '';
+  return request.method.toUpperCase() === 'POST' && path === '/api/auth/logout';
 }

@@ -21,7 +21,7 @@ const hopByHopHeaders = new Set([
 export async function proxyToAurral(
   request: FastifyRequest,
   reply: FastifyReply,
-  config: Pick<GatewayConfig, 'AURRAL_URL'>,
+  config: Pick<GatewayConfig, 'AURRAL_URL' | 'AURRAL_FORWARD_ADMIN_ROLE'>,
   session: Pick<SessionTokenPayload, 'name' | 'role'>
 ): Promise<void> {
   const target = new URL(request.raw.url ?? '/', config.AURRAL_URL);
@@ -41,7 +41,7 @@ export async function proxyToAurral(
   }
 
   headers.set('x-forwarded-user', session.name);
-  headers.set('x-forwarded-role', session.role);
+  headers.set('x-forwarded-role', getForwardedRole(session, config));
 
   if (request.headers.host) {
     headers.set('x-forwarded-host', request.headers.host);
@@ -49,14 +49,16 @@ export async function proxyToAurral(
 
   headers.set('x-forwarded-proto', request.protocol);
 
+  const requestBody = getProxyRequestBody(request);
+
   const init: RequestInit & { duplex?: 'half' } = {
     method: request.method,
     headers,
-    body: supportsRequestBody(request.method) ? (request.raw as unknown as BodyInit) : null,
     redirect: 'manual'
   };
 
-  if (supportsRequestBody(request.method)) {
+  if (requestBody !== null) {
+    init.body = requestBody;
     init.duplex = 'half';
   }
 
@@ -72,10 +74,47 @@ export async function proxyToAurral(
     reply.header(key, value);
   });
 
-  const body = Buffer.from(await response.arrayBuffer());
-  reply.send(body);
+  const responseBody = Buffer.from(await response.arrayBuffer());
+  reply.send(responseBody);
 }
 
 function supportsRequestBody(method: string): boolean {
   return !['GET', 'HEAD'].includes(method.toUpperCase());
+}
+
+function getForwardedRole(
+  session: Pick<SessionTokenPayload, 'role'>,
+  config: Pick<GatewayConfig, 'AURRAL_FORWARD_ADMIN_ROLE'>
+): SessionTokenPayload['role'] {
+  if (session.role === 'admin' && !config.AURRAL_FORWARD_ADMIN_ROLE) {
+    return 'user';
+  }
+
+  return session.role;
+}
+
+function getProxyRequestBody(request: FastifyRequest): BodyInit | null {
+  if (!supportsRequestBody(request.method)) {
+    return null;
+  }
+
+  const body = request.body;
+
+  if (body === undefined || body === null) {
+    return null;
+  }
+
+  if (typeof body === 'string' || body instanceof ArrayBuffer) {
+    return body;
+  }
+
+  if (Buffer.isBuffer(body)) {
+    return body as unknown as BodyInit;
+  }
+
+  if (body instanceof Uint8Array) {
+    return body as unknown as BodyInit;
+  }
+
+  return JSON.stringify(body);
 }

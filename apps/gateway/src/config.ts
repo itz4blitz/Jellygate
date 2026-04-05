@@ -20,6 +20,7 @@ const envSchema = z.object({
   JELLYFIN_PUBLIC_URL: z.url().optional(),
   JELLYFIN_BRIDGE_PATH: z.string().default('/JellygateBridge/launch'),
   AURRAL_URL: z.url(),
+  AURRAL_FORWARD_ADMIN_ROLE: booleanish.default(false),
   COOKIE_NAME: z.string().default('jellygate_session'),
   COOKIE_SECRET: z.string().min(32),
   COOKIE_SECURE: booleanish.default(true),
