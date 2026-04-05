@@ -144,10 +144,21 @@ const handleProxyRequest = async (request: FastifyRequest, reply: FastifyReply) 
 
   if (!session) {
     if (prefersHtml(request)) {
-      const loginUrl = new URL(`${config.UI_BASE_PATH}/`, 'http://local');
-      loginUrl.searchParams.set('returnTo', normalizeReturnTo(request.raw.url));
-      reply.redirect(loginUrl.pathname + loginUrl.search);
-      return;
+      const returnTo = normalizeReturnTo(request.raw.url);
+
+      if (config.ALLOW_JELLYFIN_HANDOFF && config.JELLYFIN_PUBLIC_URL) {
+        const handoffUrl = new URL('/auth/continue-with-jellyfin', 'http://local');
+        handoffUrl.searchParams.set('returnTo', returnTo);
+        reply.redirect(handoffUrl.pathname + handoffUrl.search);
+        return;
+      }
+
+      if (config.ALLOW_PASSWORD_LOGIN) {
+        const loginUrl = new URL(`${config.UI_BASE_PATH}/`, 'http://local');
+        loginUrl.searchParams.set('returnTo', returnTo);
+        reply.redirect(loginUrl.pathname + loginUrl.search);
+        return;
+      }
     }
 
     reply.code(401);

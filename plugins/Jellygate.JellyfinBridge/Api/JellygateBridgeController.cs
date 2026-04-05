@@ -1,6 +1,8 @@
+using System.Globalization;
 using Jellygate.JellyfinBridge.Configuration;
 using Jellyfin.Data;
 using Jellyfin.Database.Implementations.Enums;
+using MediaBrowser.Common;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
@@ -14,19 +16,25 @@ namespace Jellygate.JellyfinBridge.Api;
 [Route("JellygateBridge")]
 public class JellygateBridgeController : ControllerBase
 {
+    private readonly IApplicationHost _applicationHost;
     private readonly ILogger<JellygateBridgeController> _logger;
     private readonly IUserManager _userManager;
 
-    public JellygateBridgeController(IUserManager userManager, ILogger<JellygateBridgeController> logger)
+    public JellygateBridgeController(IApplicationHost applicationHost, IUserManager userManager, ILogger<JellygateBridgeController> logger)
     {
+        _applicationHost = applicationHost;
         _userManager = userManager;
         _logger = logger;
     }
 
-    [Authorize]
     [HttpGet("start")]
     public ActionResult Start([FromQuery] string? returnTo = null)
     {
+        if (User?.Identity?.IsAuthenticated != true)
+        {
+            return Redirect(BuildJellyfinLoginUri());
+        }
+
         var plugin = Plugin.Instance;
         if (plugin is null)
         {
@@ -108,6 +116,14 @@ public class JellygateBridgeController : ControllerBase
         builder.Path = CombinePaths(builder.Path, configuration.GatewayHandoffPath);
         builder.Query = $"token={Uri.EscapeDataString(token)}";
         return builder.Uri.ToString();
+    }
+
+    private string BuildJellyfinLoginUri()
+    {
+        var currentTarget = string.Concat(Request.PathBase, Request.Path, Request.QueryString.Value);
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"{Request.PathBase}/web/#/login?serverid={Uri.EscapeDataString(_applicationHost.SystemId)}&url={Uri.EscapeDataString(currentTarget)}");
     }
 
     private static string CombinePaths(string left, string right)

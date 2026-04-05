@@ -1,140 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
+<head>
+    <meta charset="utf-8">
     <title>Jellygate Bridge</title>
-    <style>
-      body {
-        margin: 0;
-        padding: 24px;
-        color: #111827;
-        font-family: Inter, system-ui, sans-serif;
-        background: #f8fafc;
-      }
+</head>
+<body>
+    <div id="JellygateBridgeConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="JellygateBridgeConfigForm">
+                    <div class="verticalSection verticalSection-extrabottompadding">
+                        <h2 class="sectionTitle">Jellygate Bridge</h2>
+                        <div class="fieldDescription">
+                            Configure the public Jellygate endpoint that Jellyfin should redirect authenticated users to for the Aurral handoff flow.
+                        </div>
+                    </div>
 
-      .panel {
-        max-width: 720px;
-        padding: 24px;
-        border-radius: 16px;
-        background: #ffffff;
-        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-      }
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="GatewayBaseUrl">Gateway Base URL</label>
+                        <input id="GatewayBaseUrl" name="GatewayBaseUrl" type="url" is="emby-input" placeholder="https://music.example.com" />
+                        <div class="fieldDescription">The public Jellygate origin users should land on after the Jellyfin handoff.</div>
+                    </div>
 
-      h1 {
-        margin-top: 0;
-      }
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="GatewayHandoffPath">Gateway Handoff Path</label>
+                        <input id="GatewayHandoffPath" name="GatewayHandoffPath" type="text" is="emby-input" placeholder="/auth/handoff" />
+                        <div class="fieldDescription">The Jellygate route that receives signed handoff tokens.</div>
+                    </div>
 
-      .field {
-        display: grid;
-        gap: 8px;
-        margin-bottom: 16px;
-      }
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="SharedSecret">Shared Secret</label>
+                        <input id="SharedSecret" name="SharedSecret" type="password" is="emby-input" />
+                        <div class="fieldDescription">Must match the Jellygate container's HANDOFF_SECRET value.</div>
+                    </div>
 
-      input {
-        padding: 10px 12px;
-        border: 1px solid #cbd5e1;
-        border-radius: 10px;
-        font: inherit;
-      }
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="TokenLifetimeSeconds">Token Lifetime (seconds)</label>
+                        <input id="TokenLifetimeSeconds" name="TokenLifetimeSeconds" type="number" min="15" is="emby-input" />
+                        <div class="fieldDescription">Short-lived token expiry used for the handoff redirect.</div>
+                    </div>
 
-      button {
-        border: 0;
-        border-radius: 10px;
-        padding: 10px 16px;
-        color: #ffffff;
-        font: inherit;
-        background: #2563eb;
-        cursor: pointer;
-      }
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="DefaultReturnPath">Default Return Path</label>
+                        <input id="DefaultReturnPath" name="DefaultReturnPath" type="text" is="emby-input" placeholder="/" />
+                        <div class="fieldDescription">Fallback path inside Jellygate when no return target is supplied.</div>
+                    </div>
 
-      #status {
-        margin-top: 16px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="panel">
-      <h1>Jellygate Bridge</h1>
-      <p>
-        Configure the Jellygate handoff target that Jellyfin should redirect users to after minting a signed bridge token.
-      </p>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-      <div class="field">
-        <label for="gatewayBaseUrl">Gateway Base URL</label>
-        <input id="gatewayBaseUrl" placeholder="https://music.example.com" />
-      </div>
+        <script type="text/javascript">
+            var JellygateBridgeConfig = {
+                pluginUniqueId: '7f2e6183-1cb8-4d7e-b0d7-8fdb70353f98'
+            };
 
-      <div class="field">
-        <label for="gatewayHandoffPath">Gateway Handoff Path</label>
-        <input id="gatewayHandoffPath" placeholder="/auth/handoff" />
-      </div>
+            document.querySelector('#JellygateBridgeConfigPage').addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
 
-      <div class="field">
-        <label for="sharedSecret">Shared Secret</label>
-        <input id="sharedSecret" placeholder="Must match HANDOFF_SECRET in the gateway" type="password" />
-      </div>
+                ApiClient.getPluginConfiguration(JellygateBridgeConfig.pluginUniqueId).then(function (config) {
+                    document.querySelector('#GatewayBaseUrl').value = config.GatewayBaseUrl || '';
+                    document.querySelector('#GatewayHandoffPath').value = config.GatewayHandoffPath || '/auth/handoff';
+                    document.querySelector('#SharedSecret').value = config.SharedSecret || '';
+                    document.querySelector('#TokenLifetimeSeconds').value = config.TokenLifetimeSeconds || 60;
+                    document.querySelector('#DefaultReturnPath').value = config.DefaultReturnPath || '/';
+                    Dashboard.hideLoadingMsg();
+                });
+            });
 
-      <div class="field">
-        <label for="tokenLifetimeSeconds">Token Lifetime (seconds)</label>
-        <input id="tokenLifetimeSeconds" min="15" type="number" />
-      </div>
+            document.querySelector('#JellygateBridgeConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
 
-      <div class="field">
-        <label for="defaultReturnPath">Default Return Path</label>
-        <input id="defaultReturnPath" placeholder="/" />
-      </div>
+                ApiClient.getPluginConfiguration(JellygateBridgeConfig.pluginUniqueId).then(function (config) {
+                    config.GatewayBaseUrl = document.querySelector('#GatewayBaseUrl').value.trim();
+                    config.GatewayHandoffPath = document.querySelector('#GatewayHandoffPath').value.trim() || '/auth/handoff';
+                    config.SharedSecret = document.querySelector('#SharedSecret').value;
+                    config.TokenLifetimeSeconds = Number(document.querySelector('#TokenLifetimeSeconds').value || '60');
+                    config.DefaultReturnPath = document.querySelector('#DefaultReturnPath').value.trim() || '/';
 
-      <button id="save" type="button">Save</button>
-      <div id="status"></div>
+                    ApiClient.updatePluginConfiguration(JellygateBridgeConfig.pluginUniqueId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+
+                return false;
+            });
+        </script>
     </div>
-
-    <script>
-      const endpoint = '/JellygateBridge/config';
-
-      const fields = {
-        gatewayBaseUrl: document.getElementById('gatewayBaseUrl'),
-        gatewayHandoffPath: document.getElementById('gatewayHandoffPath'),
-        sharedSecret: document.getElementById('sharedSecret'),
-        tokenLifetimeSeconds: document.getElementById('tokenLifetimeSeconds'),
-        defaultReturnPath: document.getElementById('defaultReturnPath')
-      };
-
-      const status = document.getElementById('status');
-      const save = document.getElementById('save');
-
-      load();
-      save.addEventListener('click', submit);
-
-      async function load() {
-        const response = await fetch(endpoint, { credentials: 'same-origin' });
-        const config = await response.json();
-        fields.gatewayBaseUrl.value = config.gatewayBaseUrl || '';
-        fields.gatewayHandoffPath.value = config.gatewayHandoffPath || '/auth/handoff';
-        fields.sharedSecret.value = config.sharedSecret || '';
-        fields.tokenLifetimeSeconds.value = config.tokenLifetimeSeconds || 60;
-        fields.defaultReturnPath.value = config.defaultReturnPath || '/';
-      }
-
-      async function submit() {
-        status.textContent = 'Saving...';
-
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            gatewayBaseUrl: fields.gatewayBaseUrl.value,
-            gatewayHandoffPath: fields.gatewayHandoffPath.value,
-            sharedSecret: fields.sharedSecret.value,
-            tokenLifetimeSeconds: Number(fields.tokenLifetimeSeconds.value || '60'),
-            defaultReturnPath: fields.defaultReturnPath.value || '/'
-          })
-        });
-
-        status.textContent = response.ok ? 'Saved.' : 'Failed to save configuration.';
-      }
-    </script>
-  </body>
+</body>
 </html>

@@ -4,13 +4,14 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${1:-0.1.0}"
+ASSEMBLY_VERSION="$(printf '%s' "$VERSION" | awk -F. '{ printf "%d.%d.%d.0", $1, $2, $3 }')"
 PUBLISH_DIR="$ROOT_DIR/dist/plugin/Jellygate.JellyfinBridge"
 ZIP_PATH="$ROOT_DIR/dist/plugin/Jellygate.JellyfinBridge-v${VERSION}.zip"
 
 rm -rf "$PUBLISH_DIR"
 mkdir -p "$PUBLISH_DIR"
 
-dotnet publish "$ROOT_DIR/plugins/Jellygate.JellyfinBridge/Jellygate.JellyfinBridge.csproj" -c Release -o "$PUBLISH_DIR" -p:Version="$VERSION"
+dotnet publish "$ROOT_DIR/plugins/Jellygate.JellyfinBridge/Jellygate.JellyfinBridge.csproj" -c Release -o "$PUBLISH_DIR" -p:Version="$VERSION" -p:AssemblyVersion="$ASSEMBLY_VERSION" -p:FileVersion="$ASSEMBLY_VERSION" -p:InformationalVersion="$VERSION"
 
 rm -f "$ZIP_PATH"
 cd "$ROOT_DIR/dist/plugin"

@@ -19,6 +19,8 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
     public override string Name => "Jellygate Bridge";
 
+    public override string Description => "Bridge Jellyfin authentication into Aurral through a signed handoff flow.";
+
     public override Guid Id => Guid.Parse("7f2e6183" + "-1cb8-4d7e-b0d7-8fdb70353f98");
 
     public IEnumerable<PluginPageInfo> GetPages()

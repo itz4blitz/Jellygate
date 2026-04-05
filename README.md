@@ -92,6 +92,12 @@ That script publishes the plugin and creates a zip in `dist/plugin/`.
 
 For a one-off local upload, the published plugin folder can also be copied directly from the build output.
 
+If you prefer installing the plugin through Jellyfin's repository UI, add this repository URL:
+
+```text
+https://raw.githubusercontent.com/itz4blitz/Jellygate/main/manifest.json
+```
+
 ## Docker Image
 
 The gateway image is published through GitHub Actions to `ghcr.io/<owner>/jellygate`.
