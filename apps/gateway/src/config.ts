@@ -18,7 +18,7 @@ const envSchema = z.object({
   UI_BASE_PATH: z.string().default('/__jellygate'),
   JELLYFIN_URL: z.url(),
   JELLYFIN_PUBLIC_URL: z.url().optional(),
-  JELLYFIN_BRIDGE_PATH: z.string().default('/JellygateBridge/start'),
+  JELLYFIN_BRIDGE_PATH: z.string().default('/JellygateBridge/launch'),
   AURRAL_URL: z.url(),
   COOKIE_NAME: z.string().default('jellygate_session'),
   COOKIE_SECRET: z.string().min(32),
@@ -73,7 +73,7 @@ function normalizeBridgePath(input: string): string {
   const trimmed = input.trim();
 
   if (trimmed === '' || trimmed === '/') {
-    return '/JellygateBridge/start';
+    return '/JellygateBridge/launch';
   }
 
   return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;

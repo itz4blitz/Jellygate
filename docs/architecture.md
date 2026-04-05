@@ -115,10 +115,10 @@ Browser
 
 ```text
 Browser
-  -> Jellyfin plugin route /JellygateBridge/start
-  -> Jellyfin resolves current user
-  -> Plugin signs short-lived token
-  -> Redirect to Jellygate /auth/handoff?token=...
+  -> Jellyfin plugin helper route /JellygateBridge/launch
+  -> Helper page reads the current Jellyfin browser session from same-origin storage
+  -> Helper calls the authenticated bridge session endpoint
+  -> Plugin signs short-lived token and returns the Jellygate redirect URL
   -> Jellygate validates token and issues session cookie
   -> Jellygate reverse proxy
   -> Aurral

@@ -8,12 +8,12 @@
     "category": "General",
     "versions": [
       {
-        "version": "0.1.4.0",
-        "changelog": "- Make Jellyfin login and bridge handoff the default browser flow\n- Fix native Jellyfin plugin configuration page rendering\n- Stamp plugin assembly version metadata",
+        "version": "__VG_IPV4_365cd3f846fd__",
+        "changelog": "- Add same-origin Jellyfin bridge helper page that reads the current browser session\n- Make the helper page the default Jellyfin handoff target\n- Remove the broken post-login raw-endpoint redirect path",
         "targetAbi": "10.11.7.0",
-        "sourceUrl": "https://github.com/itz4blitz/Jellygate/releases/download/v0.1.4/Jellygate.JellyfinBridge-v0.1.4.zip",
-        "checksum": "1b1d8d3ca62e9d73343d19ef7b015974",
-        "timestamp": "2026-04-05T05:17:12Z"
+        "sourceUrl": "https://github.com/itz4blitz/Jellygate/releases/download/v0.1.5/Jellygate.JellyfinBridge-v0.1.5.zip",
+        "checksum": "691fad8daa4cd68151535ab8834ad598",
+        "timestamp": "2026-04-05T05:34:25Z"
       }
     ]
   }
